@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<block>
+  <name>zero_pad</name>
+  <key>hurdle1_zero_pad</key>
+  <category>[hurdle1]</category>
+  <import>import hurdle1</import>
+  <make>hurdle1.zero_pad($type.size, $zero_pad_tag_name)</make>
+  <param>
+    <name>Zero Pad Tag Name</name>
+    <key>zero_pad_tag_name</key>
+    <type>string</type>
+  </param>  
+  <param>
+	<name>Input Type</name>
+	<key>type</key>
+	<type>enum</type>
+	<option>
+		<name>Complex</name>
+		<key>complex</key>
+		<opt>size:gr.sizeof_gr_complex</opt>
+	</option>
+	<option>
+		<name>Float</name>
+		<key>float</key>
+		<opt>size:gr.sizeof_float</opt>
+	</option>
+	<option>
+		<name>Int</name>
+		<key>int</key>
+		<opt>size:gr.sizeof_int</opt>
+	</option>
+	<option>
+		<name>Short</name>
+		<key>short</key>
+		<opt>size:gr.sizeof_short</opt>
+	</option>
+	<option>
+		<name>Byte</name>
+		<key>byte</key>
+		<opt>size:gr.sizeof_char</opt>
+	</option>
+  </param>
+  <sink>
+    <name>in</name>
+    <type>$type</type>
+  </sink>
+  <source>
+    <name>out</name>
+    <type>$type</type>
+  </source>
+</block>
