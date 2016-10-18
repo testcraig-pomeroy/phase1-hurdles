@@ -191,11 +191,11 @@ def run_trial(trial_num, num_rounds, scoring_rounds, avg_score_threshold, client
         d_current_state = d_next_state
 
         
-        score_hist[i] = score
+        score_hist[i] = current_score
 
 
     # compute score over the scoring rounds
-    score = sum(score_hist[-scoring_rounds:]
+    score = sum(score_hist[-scoring_rounds:])
     
     
     t1 = time.time()
