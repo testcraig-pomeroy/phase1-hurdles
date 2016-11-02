@@ -42,6 +42,9 @@ $LXC_ATTACH_CMD apt-get upgrade -y
 $LXC_ATTACH_CMD apt-get install -y openssh-server python2.7 python-pip python-dev git
 $LXC_ATTACH_CMD pip install --upgrade pip
 
+# install other hurdle 2 dependencies
+$LXC_ATTACH_CMD pip install jupyter numpy
+
 # install gnuradio
 $LXC_ATTACH_CMD pip install PyBOMBS
 $LXC_ATTACH_CMD pybombs recipes add gr-recipes git+https://github.com/gnuradio/gr-recipes.git  
