@@ -18,6 +18,7 @@ import sys
 
 from hurdle2.ScoringServer import runScoringServer
 from hurdle2.Transmitter import Transmitter
+from generate_band_plan import generate_band_plan
 
 def bandplan_to_answer(bandplan):
     
@@ -55,30 +56,77 @@ def main(argv=None):
         # Setup argument parser
         parser = ArgumentParser(description="Hurdle 2 Test Driver", formatter_class=ArgumentDefaultsHelpFormatter)
 
-        parser.add_argument("--host",            type=str,   default="0.0.0.0",       help="IP address that this script will listen on for incoming connections") 
-        parser.add_argument("--tx-port",         type=int,   default=9091,            help="Port that sample transmitting TCP Server will listen to for incoming connections") 
-        parser.add_argument("--rpc-port",        type=int,   default=9090,            help="Port for RPC connections") 
-        parser.add_argument("--bandplan",        type=str,   default="bandplan.json", help="IP address that this script will listen on for incoming connections")         
-        parser.add_argument("--sample-duration", type=float, default=5.0,             help="Set the duration of the test transmission in seconds")
-        parser.add_argument("--sample-file",     type=str,   default="samples.dat",   help="path to store transmit sample recording to")
+        parser.add_argument("--host",              type=str,   default="0.0.0.0",       help="IP address that this script will listen on for incoming connections") 
+        parser.add_argument("--tx-port",           type=int,   default=9091,            help="Port that sample transmitting TCP Server will listen to for incoming connections") 
+        parser.add_argument("--rpc-port",          type=int,   default=9090,            help="Port for RPC connections") 
+        parser.add_argument("--bandplan",          type=str,   default="bandplan.json", help="IP address that this script will listen on for incoming connections")         
+        parser.add_argument("--sample-duration",   type=float, default=3.0,             help="Set the duration of the test transmission in seconds")
+        parser.add_argument("--fm-file-start",     type=float, default=27.75,           help="Set the starting point at which to pull samples from the fm transmit file")
+        parser.add_argument("--sample-file",       type=str,   default="samples.dat",   help="path to store transmit sample recording to")
 
+        parser.add_argument("--channel-bandwidth", type=float, default=3e6,             help="Total channel bandwidth, Hz")
+        parser.add_argument("--n-bins",            type=int,   default=30,              help="Number of frequency bins") 
+        parser.add_argument("--n-signals",         type=int,   default=6,               help="Number of signals to generate") 
+        parser.add_argument("--min-snr-db",        type=float, default=15,              help="Minimum SNR per signal") 
+        parser.add_argument("--max-snr-db",        type=float, default=20,              help="Maximum SNR per signal") 
+        parser.add_argument("--instance-seed",     type=int,   default=None,            help="Random generator seed")
+        parser.add_argument("--max-signal-bins",   type=int,   default=4,               help="Maximum signal width in bins") 
+        parser.add_argument("--max-tries",         type=int,   default=100,             help="Maximum number of iterations to run random signal generator before giving up") 
+        parser.add_argument("--test-label",        type=str,   default="test",          help="label to attach inside json results file")
+        
         # Process arguments
         args = parser.parse_args()
 
         print(args)
 
-        with open(args.bandplan, 'r') as f:
-            bandplan = yaml.safe_load(f)
+        # Total bandwidth of the channel
+        channel_bandwidth = args.channel_bandwidth
+
+        # The number of bins to divide the channel into
+        n_bins = args.n_bins
+
+        # The number of signals to generate
+        n_signals = args.n_signals
+
+        # Minimum SNR in dB
+        min_snr_db = args.min_snr_db
+        max_snr_db = args.max_snr_db
         
-        answer = bandplan_to_answer(bandplan)
+        # Valid signal types
+        signal_types = ('FM','QPSK','GMSK')
+
+        # Random generator seed.  Set to "None" for random selection
+        instance_seed = args.instance_seed
+
+        #Maximum width of a signal in bins
+        max_signal_bins= args.max_signal_bins
+
+        #Maximum number of attempts before aborting
+        max_tries = args.max_tries
+        
+        band_plan = generate_band_plan(channel_bandwidth, n_bins, n_signals, min_snr_db, 
+                                       max_snr_db, signal_types, instance_seed, max_signal_bins,
+                                       max_tries )
+
+        with open(args.bandplan, 'w') as f:
+            json.dump(band_plan, f)
+        
+        with open(args.bandplan, 'r') as f:
+            band_plan = yaml.safe_load(f)
+        
+        answer = bandplan_to_answer(band_plan)
 
         print("correct answer is {}".format(answer))
 
-        p1 = multiprocessing.Process(target=runScoringServer, args=(args.host, args.rpc_port, answer))
-        
-        tx = Transmitter(bandplan, file_len_s=args.sample_duration, sample_file_name=args.sample_file)
+        p1 = multiprocessing.Process(target=runScoringServer, args=(args.host, args.rpc_port, answer, args.test_label))
 
-        p2 = multiprocessing.Process(target=tx.go, args=(args.host, args.tx_port))
+        tx = Transmitter(band_plan=band_plan, 
+                         file_len_s=args.sample_duration,
+                         fm_file_start_s=args.fm_file_start,
+                         sample_file_name=args.sample_file)
+        
+
+        p2 = multiprocessing.Process(target=tx.go, args=(True, args.host, args.tx_port))
 
         p1.start()
         p2.start()

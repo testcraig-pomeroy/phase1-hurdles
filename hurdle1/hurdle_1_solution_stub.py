@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Hurdle 1 Solution Stub
-# Generated: Thu Oct 13 03:45:01 2016
+# Generated: Tue Nov  1 13:18:20 2016
 ##################################################
 
 from gnuradio import blocks
@@ -11,13 +11,14 @@ from gnuradio import eng_notation
 from gnuradio import gr
 from gnuradio.eng_option import eng_option
 from gnuradio.filter import firdes
+from grc_gnuradio import blks2 as grc_blks2
 from optparse import OptionParser
 import numpy
 
 
 class hurdle_1_solution_stub(gr.top_block):
 
-    def __init__(self, host='127.0.0.1', iq_port='9094', packet_port='9095', sample_filename='sample_filename.dat'):
+    def __init__(self, host='127.0.0.1', iq_port=9094, packet_port=9095, sample_filename='sample_filename.dat'):
         gr.top_block.__init__(self, "Hurdle 1 Solution Stub")
 
         ##################################################
@@ -38,25 +39,29 @@ class hurdle_1_solution_stub(gr.top_block):
         # Blocks
         ##################################################
         self.blocks_throttle_1 = blocks.throttle(gr.sizeof_char*1, samp_rate/8.0,True)
-        self.blocks_tagged_stream_to_pdu_0 = blocks.tagged_stream_to_pdu(blocks.byte_t, 'packet_len')
-        self.blocks_stream_to_tagged_stream_0 = blocks.stream_to_tagged_stream(gr.sizeof_char, 1, 1000, 'packet_len')
-        self.blocks_socket_pdu_0_0 = blocks.socket_pdu("TCP_CLIENT", host, packet_port, 10000, False)
-        self.blocks_socket_pdu_0 = blocks.socket_pdu("TCP_CLIENT", host, iq_port, 10000, False)
-        self.blocks_pdu_to_tagged_stream_0 = blocks.pdu_to_tagged_stream(blocks.complex_t, 'packet_len')
         self.blocks_head_0 = blocks.head(gr.sizeof_char*1, num_garbage)
         self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_gr_complex*1, sample_filename, False)
         self.blocks_file_sink_0.set_unbuffered(False)
+        self.blks2_tcp_source_0 = grc_blks2.tcp_source(
+        	itemsize=gr.sizeof_gr_complex*1,
+        	addr=host,
+        	port=iq_port,
+        	server=False,
+        )
+        self.blks2_tcp_sink_0 = grc_blks2.tcp_sink(
+        	itemsize=gr.sizeof_char*1,
+        	addr=host,
+        	port=packet_port,
+        	server=False,
+        )
         self.analog_random_source_x_0 = blocks.vector_source_b(map(int, numpy.random.randint(0, 255, 1000)), True)
 
         ##################################################
         # Connections
         ##################################################
-        self.msg_connect((self.blocks_socket_pdu_0, 'pdus'), (self.blocks_pdu_to_tagged_stream_0, 'pdus'))    
-        self.msg_connect((self.blocks_tagged_stream_to_pdu_0, 'pdus'), (self.blocks_socket_pdu_0_0, 'pdus'))    
         self.connect((self.analog_random_source_x_0, 0), (self.blocks_throttle_1, 0))    
-        self.connect((self.blocks_head_0, 0), (self.blocks_stream_to_tagged_stream_0, 0))    
-        self.connect((self.blocks_pdu_to_tagged_stream_0, 0), (self.blocks_file_sink_0, 0))    
-        self.connect((self.blocks_stream_to_tagged_stream_0, 0), (self.blocks_tagged_stream_to_pdu_0, 0))    
+        self.connect((self.blks2_tcp_source_0, 0), (self.blocks_file_sink_0, 0))    
+        self.connect((self.blocks_head_0, 0), (self.blks2_tcp_sink_0, 0))    
         self.connect((self.blocks_throttle_1, 0), (self.blocks_head_0, 0))    
 
     def get_host(self):
@@ -105,10 +110,10 @@ def argument_parser():
         "", "--host", dest="host", type="string", default='127.0.0.1',
         help="Set host [default=%default]")
     parser.add_option(
-        "", "--iq-port", dest="iq_port", type="string", default='9094',
+        "", "--iq-port", dest="iq_port", type="intx", default=9094,
         help="Set iq_port [default=%default]")
     parser.add_option(
-        "", "--packet-port", dest="packet_port", type="string", default='9095',
+        "", "--packet-port", dest="packet_port", type="intx", default=9095,
         help="Set packet_port [default=%default]")
     parser.add_option(
         "", "--sample-filename", dest="sample_filename", type="string", default='sample_filename.dat',

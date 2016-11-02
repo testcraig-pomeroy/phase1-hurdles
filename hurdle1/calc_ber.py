@@ -10,6 +10,10 @@ import json
 import struct
 import sys
 
+from collections import Counter
+from collections import namedtuple
+
+PacketHeaderTup = namedtuple("PacketHeaderTup", "preamble sync len0 len1 len2 len3 count0 count1 count2 count3 crc")
 
 
 PACKET_HEADER_FMT = ">II4B4Ii"
@@ -20,6 +24,8 @@ print("packet header is now {} bytes".format(PACKET_HEADER_LEN))
 FRAME_HEADER_FMT = ">II"
 FRAME_HEADER_LEN = struct.calcsize(FRAME_HEADER_FMT)
 print("frame header is now {} bytes".format(FRAME_HEADER_LEN))
+
+NON_SCORED_BYTES=8
 
 def parse_packets(preamble, sync, packet_bytes):
     sync_header = struct.pack(">II", preamble, sync)
@@ -41,6 +47,67 @@ def parse_packets(preamble, sync, packet_bytes):
 
     return packets
 
+def validate_len_and_counters(packets):
+    # try to clean up packet headers
+    
+    
+    headers = [ p[:PACKET_HEADER_LEN] for p in packets]
+
+    
+    packet_dict = {}
+    
+    for h, p in izip(headers, packets):
+        
+        t = PacketHeaderTup._make(struct.unpack(PACKET_HEADER_FMT, h))
+        
+        packet_lens = [t.len0, t.len1, t.len2, t.len3]
+        packet_counts = [t.count0, t.count1, t.count2, t.count3]
+        packet_crc = t.crc
+        
+        # try to brute force a matching CRC
+        crc_valid = False
+        valid_len = -1
+        valid_count = -1
+        
+        for l in packet_lens:
+            if crc_valid:
+                break
+            for c in packet_counts:
+                crc_fields = struct.pack(">4B4I", l,l,l,l,c,c,c,c)
+                if packet_crc == binascii.crc32(crc_fields):
+                    crc_valid=True
+                    valid_len = l
+                    valid_count = c
+                    
+                    break
+        
+        if crc_valid:
+            packet_dict[valid_count] = p
+        else:
+            expected_crc = binascii.crc32(h[8:PACKET_HEADER_LEN])
+            print("Could not validate packet header: {}".format(binascii.hexlify(h[:PACKET_HEADER_LEN])))
+            print("crc was {}, expected {}".format(hex(packet_crc),hex(expected_crc) ))  
+            
+            
+            # see if voting works
+            len_cnt = Counter()
+            pkt_cnt = Counter()
+            
+            for p in packet_lens:
+                len_cnt[p]+=1
+    
+            for c in packet_counts:
+                pkt_cnt[c]+=1
+            
+            common_len, common_len_count = len_cnt.most_common(1)[0]     
+            common_pkt, common_pkt_count = pkt_cnt.most_common(1)[0]  
+        
+            if common_len_count > 1 and common_pkt_count > 1:
+                print("voting successful for packet count {}".format(common_pkt))
+                packet_dict[common_pkt] = p
+            else:
+                print("voting failed")    
+    return packet_dict
 
 def main(argv=None):
 
@@ -54,7 +121,7 @@ def main(argv=None):
         parser.add_argument("--decoded-name", type=str, default="decoded.bin", help="path to find decoded packets")
         parser.add_argument("--truth-name", type=str, default="truth_packets.bin", help="path to find true values of generated packets")
         parser.add_argument("--results-name", type=str, default="results.json", help="path to store results file")
-        parser.add_argument("--team-name", type=str, default="team-name", help="Name of the team that submitted solution")
+        parser.add_argument("--test-label", type=str, default="test", help="Label for this test")
         parser.add_argument("--ber-threshold", type=float, default=1e-5, help="maximum bit error rate required to pass")
 
         # Process arguments
@@ -69,9 +136,14 @@ def main(argv=None):
             decoded_bytes = f.read()
 
         truth_packets = parse_packets(preamble, sync, truth_bytes)
+        
+        # ignore last truth packet
+        truth_packets.pop()
+        
         decoded_packets = parse_packets(preamble, sync, decoded_bytes)
 
-        truth_packet_counters = [struct.unpack(">I", p[12:16])[0] for p in truth_packets]
+        # storing as a dict to remove duplicate packet counters
+        decoded_dict = validate_len_and_counters(decoded_packets)
 
         # storing as a set to remove duplicate packet counters
         decoded_packet_counters = set([struct.unpack(">4I", p[12:28])[0] for p in decoded_packets])
@@ -80,64 +152,51 @@ def main(argv=None):
         correct_count = 0
         num_good_crcs = 0
 
-        # this ber calculator is not the final version that will be used for scoring
-        for i, c in enumerate(decoded_packet_counters):
-            # try to match each decoded packet counter c against a truth packet counter t
-            matched_ind = next((i for i, t in enumerate(truth_packet_counters) if t == c), -1)
-
-            # print(matched_ind)
-            if matched_ind >= 0:
-
-                d_crc = decoded_packet_crcs[i]
-                crc_check = binascii.crc32(decoded_packets[i][:PACKET_HEADER_LEN - 4])
-                # check that CRCs match
-
-                if crc_check == d_crc:
-
-                    num_good_crcs += 1
-
-                    tp = bytearray(truth_packets[matched_ind])
-                    dp = bytearray(decoded_packets[i])
-
-                    tp = tp[:-8]
-                    dp = dp[:-8]
-
-                    bit_errors = sum([bin(a ^ b).count("1") for a, b in izip(tp, dp)])
-                    bits_correct = 8 * len(tp) - bit_errors
-
-                    if bit_errors > 0:
-                        print("Packet found with {} bit errors. Bits correct was {}".format(bit_errors, bits_correct))
-                        print("truth:  ", binascii.hexlify(tp))
-                        print("decoded:", binascii.hexlify(dp))
-                    else:
-                        print("packet correct")
-                else:
-                    print("crc fail")
-
+        # store truth packets by packet counter
+        truth_dict = validate_len_and_counters(truth_packets)
+        
+        # subtracting 8 bytes per packet to remove the preamble and sync from the computation
+        total_bits = 8*sum([len(v)-NON_SCORED_BYTES for k,v in truth_dict.iteritems()])
+        error_count = 0
+        
+        for packet_count in sorted(truth_dict):
+            
+            if packet_count not in decoded_dict:
+                print("packet {} not found".format(packet_count))
+                
+                # subtracting 8 bytes per packet to remove preamble and sync from the computation
+                bit_errors = 8*(len(truth_dict[packet_count])-NON_SCORED_BYTES)
+        
             else:
-                bit_errors = 8 * len(decoded_packets[i])
-                bits_correct = 0
-                print("No packet found, adding {} bit errors".format(bit_errors))
 
-            correct_count += bits_correct
+                tp = bytearray(truth_dict[packet_count])
+                dp = bytearray(decoded_dict[packet_count])
+                
+                # stripping off first 8 bytes of preamble and sync
+                tp = tp[NON_SCORED_BYTES:]
+                dp = dp[NON_SCORED_BYTES:]
 
-        bit_count = 8 * sum(len(t) for t in truth_packets)
-        print("found {} packets out of total {}".format(len(decoded_packets), len(truth_packets)))
+                bit_errors = sum([bin(a ^ b).count("1") for a, b in izip(tp, dp)])
+            
+            error_count += bit_errors
+         
+         
+        truth_packet_nums = set(truth_dict.keys())
+        decoded_packet_nums = set(decoded_dict.keys())
+        
+        print("missing packet nums {}".format(truth_packet_nums-decoded_packet_nums))
 
-        ber = (bit_count - correct_count) / float(bit_count)
-        print("Bit error rate was {}, correct bits: {} total bits {}".format(ber, correct_count, bit_count))
+        ber = (error_count) / float(total_bits)
+        print("Bit error rate was {}, error bits: {} total bits {}".format(ber, error_count, total_bits))
 
+        
         hurdle_pass = args.ber_threshold >= ber
 
         print("Hurdle 1 Pass? {}".format(hurdle_pass))
 
-        result = {'team_name':args.team_name,
+        result = {'test_label':args.test_label,
                   'num_truth_packets':len(truth_packets),
                   'num_decoded_packets':len(decoded_packets),
-                  'num_unique_packet_counters':len(decoded_packet_counters),
-                  'num_passing_crcs':num_good_crcs,
-                  'num_truth_bits':bit_count,
-                  'num_correct_bits':correct_count,
                   'ber':ber,
                   'hurdle_pass':hurdle_pass}
 

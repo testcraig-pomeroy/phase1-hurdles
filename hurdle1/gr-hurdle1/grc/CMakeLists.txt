@@ -18,6 +18,9 @@
 # Boston, MA 02110-1301, USA.
 install(FILES
     hurdle1_traffic_parser.xml
-    hurdle1_zero_pad.xml 
+    hurdle1_zero_pad.xml
+    hurdle1_tcp_server_sink.xml
+    hurdle1_tcp_server_source.xml
+    hurdle1_random_packet_source.xml
     DESTINATION share/gnuradio/grc/blocks
 )

@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<block>
+  <name>tcp_server_sink</name>
+  <key>hurdle1_tcp_server_sink</key>
+  <category>[hurdle1]</category>
+  <import>import hurdle1</import>
+  <make>hurdle1.tcp_server_sink($type.size, $host, $port)</make>
+  <param>
+	<name>Input Type</name>
+	<key>type</key>
+	<type>enum</type>
+	<option>
+		<name>Complex</name>
+		<key>complex</key>
+		<opt>size:gr.sizeof_gr_complex</opt>
+	</option>
+	<option>
+		<name>Float</name>
+		<key>float</key>
+		<opt>size:gr.sizeof_float</opt>
+	</option>
+	<option>
+		<name>Int</name>
+		<key>int</key>
+		<opt>size:gr.sizeof_int</opt>
+	</option>
+	<option>
+		<name>Short</name>
+		<key>short</key>
+		<opt>size:gr.sizeof_short</opt>
+	</option>
+	<option>
+		<name>Byte</name>
+		<key>byte</key>
+		<opt>size:gr.sizeof_char</opt>
+	</option>
+  </param>
+  <param>
+	<name>Host</name>
+	<key>host</key>
+	<type>string</type>
+  </param>
+  <param>
+	<name>Port</name>
+	<key>port</key>
+	<type>int</type>
+  </param>
+  <sink>
+    <name>in</name>
+    <type>$type</type>
+  </sink>
+</block>

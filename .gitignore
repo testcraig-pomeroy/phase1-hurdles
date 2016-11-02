@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# temporary text editor files
+*~
+
 # Distribution / packaging
 .Python
 env/
@@ -90,6 +93,7 @@ ENV/
 
 # Eclipse project settings
 .project
+.settings
 .settings/*
 
 # Pydev project settings

@@ -32,17 +32,19 @@ from hurdle2_rpc.ttypes import BinContents
 
 
 class ScoringHandler:
-    def __init__(self, correct_answer=None, result_file="results.json"):
+    def __init__(self, correct_answer=None, result_file="results.json", test_label="test"):
         self.lgo = {}
 
         self.correct_answer = correct_answer
         self.results_file = result_file
-
+        self.test_label = test_label
+        
     def submitAnswer(self, answer):
         print('Received Answer: {}'.format(answer))
 
         if answer is not None:
             result = self.score_answer(answer)
+            result["test-label"]=self.test_label
 
             with open(self.results_file, 'w') as f:
                 f.write(json.dumps(result))
@@ -126,10 +128,10 @@ class ScoringHandler:
         return result
 
 
-def runScoringServer(host="0.0.0.0", port=9090, correct_answer=None):
+def runScoringServer(host="0.0.0.0", port=9090, correct_answer=None, test_label="test"):
 
     try:
-        handler = ScoringHandler(correct_answer=correct_answer)
+        handler = ScoringHandler(correct_answer=correct_answer, test_label=test_label)
         processor = Hurdle2Scoring.Processor(handler)
         transport = TSocket.TServerSocket(host=host, port=port)
         tfactory = TTransport.TBufferedTransportFactory()

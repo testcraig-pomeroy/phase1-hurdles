@@ -52,7 +52,7 @@ def expected_random_score(num_states,
 
 
 def execute_hurdle(make_plot=False, result_file="results.json", host='127.0.0.1', port=9090, seed=None, initial_state=None,
-                   num_trials=10, num_rounds=30000, scoring_rounds=1000, team_name="team"):
+                   num_trials=10, num_rounds=30000, scoring_rounds=1000, test_label="team"):
     num_states = 10
 
     
@@ -80,7 +80,7 @@ def execute_hurdle(make_plot=False, result_file="results.json", host='127.0.0.1'
     # Connect!
     transport.open()
 
-    results = {"trials":{}, "team_name":team_name}
+    results = {"trials":{}, "test_label":test_label}
 
     for t in range(num_trials):
 
@@ -237,7 +237,7 @@ def main(argv=None):
         parser.add_argument("--num-trials",    type=int,            default=10,             help="Number of trials to execute")
         parser.add_argument("--num-rounds",    type=int,            default=30000,          help="Number of rounds per trial to execute")
         parser.add_argument("--scoring-rounds",type=int,            default=1000,           help="Number of rounds at the end of the trial that count towards score")
-        parser.add_argument("--team-name",     type=str,            default="team",         help="team name to include in results file")
+        parser.add_argument("--test-label",    type=str,            default="team",         help="test label to include in results file")
         
         # Process arguments
         args = parser.parse_args()
@@ -254,7 +254,7 @@ def main(argv=None):
                        num_trials=args.num_trials,
                        num_rounds=args.num_rounds,
                        scoring_rounds=args.scoring_rounds,
-                       team_name=args.team_name )
+                       test_label=args.test_label )
 
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###

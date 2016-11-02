@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<block>
+  <name>random_packet_source</name>
+  <key>hurdle1_random_packet_source</key>
+  <category>[hurdle1]</category>
+  <import>import hurdle1</import>
+  <make>hurdle1.random_packet_source($preamble, $sync, $num_bits, $min_padding, $max_padding, $truth_name)</make>
+  <param>
+    <name>Preamble</name>
+    <key>preamble</key>
+    <value>0x99999999</value>
+    <type>int</type>
+  </param>
+  <param>
+    <name>Sync word</name>
+    <key>sync</key>
+    <value>0x1ACFFC1D</value>
+    <type>int</type>
+  </param>
+  <param>
+    <name>Number of bits to generate</name>
+    <key>num_bits</key>
+    <value>100000</value>
+    <type>int</type>
+  </param>
+  <param>
+    <name>Min Spacing</name>
+    <key>min_padding</key>
+    <value>2048</value>
+    <type>int</type>
+  </param>
+  <param>
+    <name>Max Spacing</name>
+    <key>max_padding</key>
+    <value>16384</value>
+    <type>int</type>
+  </param> 
+  <param>
+    <name>Truth Filename</name>
+    <key>truth_name</key>
+	<value></value>
+	<type>file_save</type>
+  </param>    
+  <source>
+	<name>out</name>
+	<type>byte</type>
+  </source>
+</block>
