@@ -67,7 +67,7 @@ $LXC_ATTACH_CMD rm -rf /usr/local/src/gnuradio/build
 $LXC_ATTACH_CMD rm -rf /usr/local/src/uhd/host/build
 
 # clone hurdle repository into container
-$LXC_ATTACH_CMD git clone "$REPOSITORY_URL" /home/sc2/phase1-hurdles
+$LXC_ATTACH_CMD git clone --recursive "$REPOSITORY_URL" /home/sc2/phase1-hurdles
 
 # build hurdle 1 support code to use TCP Server Sink block
 $LXC_ATTACH_CMD bash -c 'mkdir /home/sc2/phase1-hurdles/hurdle1/gr-hurdle1/build && cd /home/sc2/phase1-hurdles/hurdle1/gr-hurdle1/build && cmake ../ && make && make install'

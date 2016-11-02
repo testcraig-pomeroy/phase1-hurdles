@@ -1,0 +1,3 @@
+[submodule "hurdle2/hurdle2/deps"]
+	path = hurdle2/hurdle2/deps
+	url = https://github.com/SpectrumCollaborationChallenge/phase1-hurdle-dependencies.git
