@@ -39,7 +39,11 @@ def bandplan_to_answer(bandplan):
             else:
                 print("overlap in bin {}, trying to set to {} when already set to {}".format(
                     bin_ind, s["modulation_type"].upper(), answer[bin_ind]))
-    
+        
+        # store guard bins for scoring
+        for bin_ind in s["guard_bins"]:
+            answer[bin_ind] = "GUARD"
+            
     return answer
 
 

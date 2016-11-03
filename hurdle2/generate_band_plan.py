@@ -30,10 +30,9 @@
 # Caveats
 #------------------------
 #
-# Based on our understanding, "SNR" is defined as the
-# height above the noise floor, in dB, of a given signal
-# whithin the 100kHz band.  This is not the traditional
-# definition of SNR, but will be how it is used here
+# Based on our understanding, "SNR" is defined as signal power of the
+# transmitted modulation divided by the noise power within the 99% 
+# bandwidth of the signal.
 #
 # The generator does not guarantee at least one type of
 # each modulator, it is uniformly selected so you may end
@@ -149,9 +148,9 @@ def generate_band_plan(channel_bandwidth, n_bins, n_signals, min_snr_db,
                 for x in range(0,signal['n_bins']) )
             
         
-    
-        signal['guard_bins'] = set([ min(signal['occupied_bins'])-1,
-                                     max(signal['occupied_bins'])+1]
+        # ensuring guard bins wrap around in the frequency domain correctly
+        signal['guard_bins'] = set([ (min(signal['occupied_bins'])-1)%n_bins,
+                                     (max(signal['occupied_bins'])+1)%n_bins]
                                   )
         
         # limit guard bins to being within valid bins
