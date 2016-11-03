@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<block>
+  <name>tag_delay</name>
+  <key>hurdle1_tag_delay</key>
+  <category>[hurdle1]</category>
+  <import>import hurdle1</import>
+  <make>hurdle1.tag_delay($delay)</make>
+  <param>
+    <name>Tag Delay</name>
+    <key>delay</key>
+    <value>0</value>
+    <type>int</type>
+  </param>
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+  </sink>
+  <source>
+    <name>out</name>
+    <type>complex</type>
+  </source>
+</block>
