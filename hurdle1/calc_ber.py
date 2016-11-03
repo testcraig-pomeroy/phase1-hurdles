@@ -93,8 +93,8 @@ def validate_len_and_counters(packets):
             len_cnt = Counter()
             pkt_cnt = Counter()
             
-            for p in packet_lens:
-                len_cnt[p]+=1
+            for l in packet_lens:
+                len_cnt[l]+=1
     
             for c in packet_counts:
                 pkt_cnt[c]+=1

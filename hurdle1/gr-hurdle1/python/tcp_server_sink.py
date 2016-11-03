@@ -105,7 +105,8 @@ class tcp_server_sink(gr.sync_block):
                 # we've timed out, for example if the client was still crunching on data
                 timed_out = True
                 items_written = 0                
-            
+                items_consumed = 0
+                
             elif exceptional:
                 print("Exceptional socket in read_items. Do something about this?")
                 timed_out = None

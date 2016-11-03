@@ -37,7 +37,7 @@ GR_PYTHON_INSTALL(
     tcp_server_sink.py
     tcp_server_source.py
     random_packet_source.py
-    DESTINATION ${GR_PYTHON_DIR}/hurdle1
+    tag_delay.py DESTINATION ${GR_PYTHON_DIR}/hurdle1
 )
 
 ########################################################################
@@ -50,3 +50,4 @@ set(GR_TEST_PYTHON_DIRS ${CMAKE_BINARY_DIR}/swig)
 GR_ADD_TEST(qa_tcp_server_sink ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_tcp_server_sink.py)
 GR_ADD_TEST(qa_tcp_server_source ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_tcp_server_source.py)
 GR_ADD_TEST(qa_random_packet_source ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_random_packet_source.py)
+GR_ADD_TEST(qa_tag_delay ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_tag_delay.py)

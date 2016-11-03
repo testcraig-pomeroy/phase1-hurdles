@@ -22,5 +22,5 @@ install(FILES
     hurdle1_tcp_server_sink.xml
     hurdle1_tcp_server_source.xml
     hurdle1_random_packet_source.xml
-    DESTINATION share/gnuradio/grc/blocks
+    hurdle1_tag_delay.xml DESTINATION share/gnuradio/grc/blocks
 )
