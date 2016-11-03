@@ -20,7 +20,6 @@ import matplotlib as mpl
 import numpy as np
 import random
 
-
 def compute_score(action, state_prediction, state_actual,
                   no_collision_reward=1,
                   collision_penalty=-12,
@@ -82,31 +81,44 @@ def execute_hurdle(make_plot=False, result_file="results.json", host='127.0.0.1'
 
     results = {"trials":{}, "test_label":test_label}
 
+    
+    # set up a dedicated random number generator
+    # for this object to guarantee repeatability
+    # of solution evaluation without forcing
+    # each trial to use the same seed.
+    # This ensures the same set of trial seeds will be used
+    # when using the same top level seed
+    rng = np.random.RandomState(seed)
+      
+    
     for t in range(num_trials):
 
+        # generate a unique seed per trial
+        trial_seed = rng.randint(0, 0xffffffff)         
+        
+        
         if initial_state is None:
-            initial_state = random.randrange(num_states)
-
-        if seed is None:
-            seed = random.randint(0, 0xffffffff)    
+            trial_initial_state = rng.choice(range(num_states))
+        else:
+            trial_initial_state = initial_state
 
         # create a new probabilistic state machine with potentaiily 
         # a new initial state and seed
         # at the start of each trial
-        psm = PSM(num_states, initial_state, seed)
+        psm = PSM(num_states, initial_state, trial_seed)
 
         
-        print("starting trial {} of {}".format(t,num_trials))
+        print("starting trial {} of {} with trial seed {}".format(t,num_trials, trial_seed))
 
         # run the trial and store the trial results
         trial_results = run_trial(t, num_rounds, scoring_rounds, avg_score_threshold, client, psm)
         
         # add seed and initial state to trial_results
-        trial_results["seed"] = seed
-        trial_results["initial_state"] = initial_state
+        trial_results["seed"] = trial_seed
+        trial_results["initial_state"] = trial_initial_state
 
         results["trials"][t]=trial_results
-
+        
     # count the number of trials that passed
     trials_passed = sum([results["trials"][i]["trial_pass"] for i in range(num_trials)])
     
@@ -116,6 +128,7 @@ def execute_hurdle(make_plot=False, result_file="results.json", host='127.0.0.1'
     
     print("Hurdle 3 Passed? {}".format(hurdle_pass))
 
+    results["main_seed"] = seed
     results["num_trials"]=num_trials
     results["num_states"]=num_states
     results["trials_passed"]=trials_passed
