@@ -105,7 +105,7 @@ def execute_hurdle(make_plot=False, result_file="results.json", host='127.0.0.1'
         # create a new probabilistic state machine with potentaiily 
         # a new initial state and seed
         # at the start of each trial
-        psm = PSM(num_states, initial_state, trial_seed)
+        psm = PSM(num_states, trial_initial_state, trial_seed)
 
         
         print("starting trial {} of {} with trial seed {}".format(t,num_trials, trial_seed))
