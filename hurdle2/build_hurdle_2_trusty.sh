@@ -86,4 +86,11 @@ $LXC_ATTACH_CMD chgrp -R sc2 /home/sc2/phase1-hurdles
 lxc-stop -P "$LXC_PREFIX" -n $LXC_NAME
 lxc-copy -P "$LXC_PREFIX" -n $LXC_NAME -N $SOLUTION_NAME
 
+# make metadata.yaml file for example solution
+creation_date=`date +%s`
+
+cat >"$LXC_PREFIX"/metadata.yaml <<EOL
+architecture: "amd64"
+creation_date: ${creation_date}
+EOL
 
