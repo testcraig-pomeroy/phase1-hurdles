@@ -38,8 +38,17 @@ done <<< "$MIRRORS"
 
 # update container packages
 $LXC_ATTACH_CMD apt-get update
+
+# workaround for procps upgrade
+$LXC_ATTACH_CMD dpkg-divert --local --rename --add /sbin/initctl
+$LXC_ATTACH_CMD ln -s /bin/true /sbin/initctl
+$LXC_ATTACH_CMD apt-get install procps
+# revert workaround after upgrade complete
+$LXC_ATTACH_CMD rm /sbin/initctl
+$LXC_ATTACH_CMD dpkg-divert --local --rename --remove /sbin/initctl
+
 $LXC_ATTACH_CMD apt-get upgrade -y
-$LXC_ATTACH_CMD apt-get install -y openssh-server python2.7 python-pip python-dev git
+$LXC_ATTACH_CMD apt-get install -y openssh-server python2.7 python-pip python-dev git swig
 $LXC_ATTACH_CMD pip install --upgrade pip
 
 # install other hurdle 1 dependencies
